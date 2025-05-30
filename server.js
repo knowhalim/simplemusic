@@ -1,17 +1,15 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
-
-// Serve audio files
 app.use('/audio', express.static('public/audio'));
 
-// Your music database (add your songs here!)
-const musicDatabase = [
+// Your music (UPDATE THESE URLS!)
+const songs = [
   {
     id: "1",
     title: "Mom Morning",
@@ -21,79 +19,92 @@ const musicDatabase = [
 
 // Home page
 app.get('/', (req, res) => {
-  res.send(`
-    <h1>🎵 Your Music Server is Running!</h1>
-    <p>Available songs:</p>
-    <ul>
-      ${musicDatabase.map(song => `<li><a href="${song.url}">${song.title}</a></li>`).join('')}
-    </ul>
-  `);
+  res.send('<h1>🎵 Music Server Running!</h1><p>Alexa endpoint: /alexa</p>');
 });
 
-// Alexa skill endpoint
+// Test endpoint 
+app.get('/alexa', (req, res) => {
+  res.json({ message: 'Alexa endpoint is working! Use POST for actual requests.' });
+});
+
+// Alexa skill endpoint (the important one!)
 app.post('/alexa', (req, res) => {
-  const request = req.body;
-  
-  console.log('Alexa Request:', JSON.stringify(request, null, 2));
-  
-  // Handle different types of requests
-  if (request.request.type === 'LaunchRequest') {
-    // When user says "Alexa, open my music"
-    res.json({
-      version: '1.0',
-      response: {
-        outputSpeech: {
-          type: 'PlainText',
-          text: 'Welcome to your personal music player! Say play music to start.'
-        },
-        shouldEndSession: false
-      }
-    });
-  } 
-  else if (request.request.type === 'IntentRequest' && request.request.intent.name === 'PlayAudio') {
-    // When user says "play music"
-    const firstSong = musicDatabase[0];
+  try {
+    console.log('📨 Alexa request received:', req.body?.request?.type);
     
-    res.json({
-      version: '1.0',
-      response: {
-        directives: [
-          {
+    const requestType = req.body?.request?.type;
+    const intentName = req.body?.request?.intent?.name;
+    
+    // Launch request - "Alexa, open my music"
+    if (requestType === 'LaunchRequest') {
+      return res.json({
+        version: '1.0',
+        response: {
+          outputSpeech: {
+            type: 'PlainText',
+            text: 'Welcome to your music player! Say play music to start listening.'
+          },
+          reprompt: {
+            outputSpeech: {
+              type: 'PlainText',
+              text: 'You can say play music, or ask for help.'
+            }
+          },
+          shouldEndSession: false
+        }
+      });
+    }
+    
+    // Play music intent
+    if (requestType === 'IntentRequest' && intentName === 'PlayAudio') {
+      const song = songs[0]; // Play first song
+      
+      return res.json({
+        version: '1.0',
+        response: {
+          directives: [{
             type: 'AudioPlayer.Play',
             playBehavior: 'REPLACE_ALL',
             audioItem: {
               stream: {
-                token: firstSong.id,
-                url: firstSong.url,
+                token: song.id,
+                url: song.url,
                 offsetInMilliseconds: 0
               },
               metadata: {
-                title: firstSong.title,
-                subtitle: 'My Personal Music'
+                title: song.title,
+                subtitle: 'Personal Music'
               }
             }
-          }
-        ],
-        shouldEndSession: true
-      }
-    });
-  }
-  else {
+          }],
+          shouldEndSession: true
+        }
+      });
+    }
+    
     // Default response
     res.json({
       version: '1.0',
       response: {
         outputSpeech: {
           type: 'PlainText',
-          text: 'Sorry, I did not understand that.'
+          text: 'I can play your music. Just say play music!'
+        },
+        shouldEndSession: true
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Alexa endpoint error:', error);
+    res.status(500).json({
+      version: '1.0',
+      response: {
+        outputSpeech: {
+          type: 'PlainText',
+          text: 'Sorry, there was a problem with the music player.'
         },
         shouldEndSession: true
       }
     });
   }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🎵 Music server running on port ${PORT}`);
 });
