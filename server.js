@@ -14,13 +14,8 @@ app.use('/audio', express.static('public/audio'));
 const musicDatabase = [
   {
     id: "1",
-    title: "My First Song",
-    url: "https://your-coolify-domain.com/audio/song1.mp3" // Replace with your domain!
-  },
-  {
-    id: "2", 
-    title: "My Second Song",
-    url: "https://your-coolify-domain.com/audio/song2.mp3" // Replace with your domain!
+    title: "Mom Morning",
+    url: "https://daymusic.sys.knowhalim.com/audio/MakanSihat.mp3" // Replace with your domain!
   }
 ];
 
