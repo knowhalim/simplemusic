@@ -9,7 +9,7 @@ app.use('/audio', express.static('public/audio'));
 
 // Your music database - ADD YOUR SONGS HERE!
 const songs = {
-  "mom music": {
+  "mom day": {
     id: "1",
     title: "Mom Morning",
     url: "https://daymusic.sys.knowhalim.com/audio/MakanSihat.mp3" // Replace with your domain!
